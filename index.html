@@ -33,19 +33,27 @@
     width: 100%;
   }
   .item, .target {
-    width: 120px;
-    height: 120px;
-    border-radius: 15px;
+    width: 140px;
+    height: 140px;
+    border-radius: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: white;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
   }
   .item img, .target img {
     width: 100px;
     height: 100px;
     object-fit: contain;
+  }
+  .target {
+    border: 3px solid transparent;
+  }
+  .target.hovered {
+    border-color: #4caf50;
+    transform: scale(1.05);
   }
   #symbols {
     position: absolute;
@@ -88,12 +96,25 @@
 
     item.addEventListener('dragstart', (e) => {
       e.dataTransfer.setData('item', e.target.dataset.item);
+      const img = e.target.cloneNode(true);
+      img.style.position = 'absolute';
+      img.style.top = '-1000px';
+      document.body.appendChild(img);
+      e.dataTransfer.setDragImage(img, 50, 50);
     });
 
-    target.addEventListener('dragover', (e) => e.preventDefault());
+    target.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      target.classList.add('hovered');
+    });
+
+    target.addEventListener('dragleave', () => {
+      target.classList.remove('hovered');
+    });
 
     target.addEventListener('drop', (e) => {
       e.preventDefault();
+      target.classList.remove('hovered');
       const droppedItem = e.dataTransfer.getData('item');
       const match = target.dataset.match;
       if (droppedItem === match) {
