@@ -25,17 +25,16 @@
     height: 90vh;
   }
 
-  /* Üst-alt hizalı ama arası daha geniş */
+  /* Artık üstteki kart sabit, alttaki kart tam ortada hizalı */
   #target, #source {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    gap: 100px; /* Önceden 40'tı */
+    justify-content: center;
   }
 
   #target {
-    margin-bottom: 60px; /* Biraz daha açıldı */
+    margin-bottom: 80px; /* eski mesafeyi koruyor */
   }
 
   .card {
@@ -146,4 +145,5 @@ window.onload = loadGame;
 </script>
 </body>
 </html>
+
 
