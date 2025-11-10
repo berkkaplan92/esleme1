@@ -6,7 +6,7 @@
   <title>Eşleme Oyunu</title>
   <style>
     :root {
-      --card-size: 140px;
+      --card-size: 150px;
     }
     body {
       margin: 0;
@@ -19,6 +19,7 @@
       overflow: hidden;
       user-select: none;
       touch-action: none;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
     .header {
       position: absolute;
@@ -30,7 +31,7 @@
       pointer-events: none;
     }
     .header img {
-      height: 80px;
+      height: 70px;
       opacity: 0.9;
     }
     #game-area {
@@ -40,7 +41,6 @@
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      gap: 20px;
     }
     .target,
     .draggable-card {
@@ -52,28 +52,45 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
     }
     .target {
       border: 3px solid transparent;
       transition: border 0.15s ease;
     }
     .target.hover {
-      border: 3px solid #4caf50;
+      border-color: #4caf50;
     }
     .target img,
     .draggable-card img {
-      width: 100px;
-      height: 100px;
+      width: 110px;
+      height: 110px;
       object-fit: contain;
       pointer-events: none;
     }
+    .label-box {
+      position: absolute;
+      bottom: -55px;
+      width: 180px;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.15;
+    }
+    .label-tr {
+      font-weight: 700;
+      color: #333;
+    }
+    .label-en {
+      color: #555;
+      font-size: 12px;
+    }
     .draggable-card {
       position: absolute;
-      bottom: 14vh;
+      bottom: 13vh;
       left: 50%;
       transform: translateX(-50%);
-      touch-action: none;
       transition: box-shadow 0.15s ease;
+      touch-action: none;
     }
     .dragging {
       box-shadow: 0 14px 30px rgba(0,0,0,0.25);
@@ -82,44 +99,43 @@
     #symbols {
       position: absolute;
       bottom: 20px;
-      font-size: 22px;
+      font-size: 20px;
       font-weight: bold;
       background: rgba(255,255,255,0.7);
       padding: 8px 16px;
       border-radius: 14px;
     }
     @media (orientation: landscape) {
-      #game-area {
-        height: 65vh;
-      }
-      .draggable-card {
-        bottom: 10vh;
-      }
+      #game-area { height: 62vh; }
+      .draggable-card { bottom: 9vh; }
     }
   </style>
 </head>
 <body>
-  <!-- süsler -->
+  <!-- süs -->
   <div class="header">
     <img src="https://cdn-icons-png.flaticon.com/512/3222/3222795.png" alt="gökkuşağı">
     <img src="https://cdn-icons-png.flaticon.com/512/414/414974.png" alt="bulut">
   </div>
 
-  <!-- oyun alanı -->
+  <!-- üstte hedef -->
   <div id="game-area">
-    <!-- hedef (SABİT KALAN) -->
-    <div id="target" class="target" data-match="apple">
-      <img src="https://cdn-icons-png.flaticon.com/512/415/415733.png" alt="Hedef Elma">
+    <div id="target" class="target">
+      <img src="" alt="hedef" id="target-img">
+      <div class="label-box">
+        <div class="label-tr" id="target-tr"></div>
+        <div class="label-en" id="target-en"></div>
+      </div>
     </div>
   </div>
 
-  <!-- sürüklenecek kart (AŞAĞIDA) -->
-  <div
-    id="card"
-    class="draggable-card"
-    data-item="apple"
-  >
-    <img src="https://cdn-icons-png.flaticon.com/512/415/415733.png" alt="Elma">
+  <!-- altta sürüklenen -->
+  <div id="card" class="draggable-card">
+    <img src="" alt="kart" id="card-img">
+    <div class="label-box">
+      <div class="label-tr" id="card-tr"></div>
+      <div class="label-en" id="card-en"></div>
+    </div>
   </div>
 
   <!-- sembol -->
@@ -130,33 +146,117 @@
   <audio id="wrongSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
 
   <script>
-    const card = document.getElementById("card");
+    // 50’lik liste – olmayanı sonra eklersin, şimdilik boş görünür
+    const pool = [
+      // meyveler
+      {id:"elma",       tr:"Elma",       en:"Apple",       src:"assets/elma.png"},
+      {id:"muz",        tr:"Muz",        en:"Banana",      src:"assets/muz.png"},
+      {id:"portakal",   tr:"Portakal",   en:"Orange",      src:"assets/portakal.png"},
+      {id:"armut",      tr:"Armut",      en:"Pear",        src:"assets/armut.png"},
+      {id:"cilek",      tr:"Çilek",      en:"Strawberry",  src:"assets/cilek.png"},
+      {id:"uzum",       tr:"Üzüm",       en:"Grapes",      src:"assets/uzum.png"},
+      {id:"kivi",       tr:"Kivi",       en:"Kiwi",        src:"assets/kivi.png"},
+      {id:"ananas",     tr:"Ananas",     en:"Pineapple",   src:"assets/ananas.png"},
+      {id:"karpuz",     tr:"Karpuz",     en:"Watermelon",  src:"assets/karpuz.png"},
+      {id:"kavun",      tr:"Kavun",      en:"Melon",       src:"assets/kavun.png"},
+      // sebzeler
+      {id:"domates",    tr:"Domates",    en:"Tomato",      src:"assets/domates.png"},
+      {id:"salatalik",  tr:"Salatalık",  en:"Cucumber",    src:"assets/salatalik.png"},
+      {id:"biber",      tr:"Biber",      en:"Pepper",      src:"assets/biber.png"},
+      {id:"patlican",   tr:"Patlıcan",   en:"Eggplant",    src:"assets/patlican.png"},
+      {id:"havuc",      tr:"Havuç",      en:"Carrot",      src:"assets/havuc.png"},
+      {id:"lahana",     tr:"Lahana",     en:"Cabbage",     src:"assets/lahana.png"},
+      {id:"brokoli",    tr:"Brokoli",    en:"Broccoli",    src:"assets/brokoli.png"},
+      {id:"misir",      tr:"Mısır",      en:"Corn",        src:"assets/misir.png"},
+      {id:"sogan",      tr:"Soğan",      en:"Onion",       src:"assets/sogan.png"},
+      {id:"sarimsak",   tr:"Sarımsak",   en:"Garlic",      src:"assets/sarimsak.png"},
+      // taşıtlar
+      {id:"araba",      tr:"Araba",      en:"Car",         src:"assets/araba.png"},
+      {id:"otobus",     tr:"Otobüs",     en:"Bus",         src:"assets/otobus.png"},
+      {id:"kamyon",     tr:"Kamyon",     en:"Truck",       src:"assets/kamyon.png"},
+      {id:"ucak",       tr:"Uçak",       en:"Airplane",    src:"assets/ucak.png"},
+      {id:"tren",       tr:"Tren",       en:"Train",       src:"assets/tren.png"},
+      {id:"gemi",       tr:"Gemi",       en:"Ship",        src:"assets/gemi.png"},
+      {id:"helikopter", tr:"Helikopter", en:"Helicopter",  src:"assets/helikopter.png"},
+      {id:"motosiklet", tr:"Motosiklet", en:"Motorcycle",  src:"assets/motosiklet.png"},
+      {id:"bisiklet",   tr:"Bisiklet",   en:"Bicycle",     src:"assets/bisiklet.png"},
+      {id:"itfaiye",    tr:"İtfaiye Aracı", en:"Fire Truck", src:"assets/itfaiye.png"},
+      // hayvanlar
+      {id:"kopek",      tr:"Köpek",      en:"Dog",         src:"assets/kopek.png"},
+      {id:"kedi",       tr:"Kedi",       en:"Cat",         src:"assets/kedi.png"},
+      {id:"kus",        tr:"Kuş",        en:"Bird",        src:"assets/kus.png"},
+      {id:"inek",       tr:"İnek",       en:"Cow",         src:"assets/inek.png"},
+      {id:"koyun",      tr:"Koyun",      en:"Sheep",       src:"assets/koyun.png"},
+      {id:"keci",       tr:"Keçi",       en:"Goat",        src:"assets/keci.png"},
+      {id:"aslan",      tr:"Aslan",      en:"Lion",        src:"assets/aslan.png"},
+      {id:"kaplan",     tr:"Kaplan",     en:"Tiger",       src:"assets/kaplan.png"},
+      {id:"ayi",        tr:"Ayı",        en:"Bear",        src:"assets/ayi.png"},
+      {id:"tavsan",     tr:"Tavşan",     en:"Rabbit",      src:"assets/tavsan.png"},
+      {id:"maymun",     tr:"Maymun",     en:"Monkey",      src:"assets/maymun.png"},
+      {id:"zebra",      tr:"Zebra",      en:"Zebra",       src:"assets/zebra.png"},
+      {id:"fil",        tr:"Fil",        en:"Elephant",    src:"assets/fil.png"},
+      {id:"panda",      tr:"Panda",      en:"Panda",       src:"assets/panda.png"},
+      {id:"penguen",    tr:"Penguen",    en:"Penguin",     src:"assets/penguen.png"},
+      {id:"horoz",      tr:"Horoz",      en:"Rooster",     src:"assets/horoz.png"},
+      {id:"tavuk",      tr:"Tavuk",      en:"Chicken",     src:"assets/tavuk.png"},
+      {id:"kurbaga",    tr:"Kurbağa",    en:"Frog",        src:"assets/kurbaga.png"},
+      {id:"balik",      tr:"Balık",      en:"Fish",        src:"assets/balik.png"},
+      {id:"at",         tr:"At",         en:"Horse",       src:"assets/at.png"},
+      {id:"yunus",      tr:"Yunus",      en:"Dolphin",     src:"assets/yunus.png"}
+    ];
+
     const target = document.getElementById("target");
+    const targetImg = document.getElementById("target-img");
+    const targetTr = document.getElementById("target-tr");
+    const targetEn = document.getElementById("target-en");
+
+    const card = document.getElementById("card");
+    const cardImg = document.getElementById("card-img");
+    const cardTr = document.getElementById("card-tr");
+    const cardEn = document.getElementById("card-en");
+
     const symbolCount = document.getElementById("count");
     const correctSound = document.getElementById("correctSound");
     const wrongSound = document.getElementById("wrongSound");
 
     let count = 0;
+    let current = null;
     let isDragging = false;
-    let startX, startY;
-    let cardStartX, cardStartY;
+    let startX, startY, cardStartX, cardStartY;
 
-    // kartın başlangıç konumunu kaydet
-    function setStartPosition() {
-      const rect = card.getBoundingClientRect();
-      cardStartX = rect.left;
-      cardStartY = rect.top;
+    function pickRandom() {
+      const idx = Math.floor(Math.random() * pool.length);
+      return pool[idx];
     }
-    // sayfa yüklenince başlangıç konumunu al
-    window.addEventListener("load", () => {
-      setTimeout(setStartPosition, 200);
-    });
-    window.addEventListener("resize", () => {
-      // ekran dönerse tekrar konum alalım
-      setTimeout(setStartPosition, 200);
-    });
 
-    // hem mouse hem dokunma
+    function loadNewCard() {
+      current = pickRandom();
+      target.dataset.match = current.id;
+      targetImg.src = current.src;
+      targetTr.textContent = current.tr;
+      targetEn.textContent = current.en;
+
+      card.dataset.item = current.id;
+      cardImg.src = current.src;
+      cardTr.textContent = current.tr;
+      cardEn.textContent = current.en;
+
+      resetCard();
+    }
+
+    function resetCard() {
+      card.style.transition = "top 0.2s ease, left 0.2s ease";
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const cw = card.offsetWidth;
+      const ch = card.offsetHeight;
+      card.style.left = (vw / 2 - cw / 2) + "px";
+      card.style.top = (vh * 0.75 - ch / 2) + "px";
+      setTimeout(() => card.style.transition = "", 220);
+    }
+
+    window.addEventListener("resize", resetCard);
+
     card.addEventListener("mousedown", dragStart);
     card.addEventListener("touchstart", dragStart, {passive:false});
 
@@ -189,7 +289,6 @@
       card.style.left = cardStartX + dx + "px";
       card.style.top  = cardStartY + dy + "px";
 
-      // hedefin üstüne geldi mi kontrol
       const cardRect = card.getBoundingClientRect();
       const targetRect = target.getBoundingClientRect();
 
@@ -200,7 +299,7 @@
       }
     }
 
-    function dragEnd(e) {
+    function dragEnd() {
       if (!isDragging) return;
       isDragging = false;
       card.classList.remove("dragging");
@@ -211,71 +310,40 @@
       document.removeEventListener("mouseup", dragEnd);
       document.removeEventListener("touchend", dragEnd);
 
-      // bırakılan konumu al
       const cardRect = card.getBoundingClientRect();
       const targetRect = target.getBoundingClientRect();
 
       if (isOver(cardRect, targetRect)) {
-        // doğru mu
-        const dropped = card.dataset.item;
-        const needed = target.dataset.match;
-        if (dropped === needed) {
+        if (card.dataset.item === target.dataset.match) {
           correct();
         } else {
           wrong();
         }
       } else {
-        // hedefe gelmediyse eski yerine dön
         resetCard();
       }
     }
 
     function isOver(r1, r2) {
-      // kartın merkezi hedefin içinde mi?
-      const centerX = r1.left + r1.width / 2;
-      const centerY = r1.top + r1.height / 2;
-      return (
-        centerX > r2.left &&
-        centerX < r2.right &&
-        centerY > r2.top &&
-        centerY < r2.bottom
-      );
+      const cx = r1.left + r1.width / 2;
+      const cy = r1.top + r1.height / 2;
+      return cx > r2.left && cx < r2.right && cy > r2.top && cy < r2.bottom;
     }
 
     function correct() {
       correctSound.play();
       count++;
       symbolCount.textContent = count;
-      // kartı tekrar aşağı indir ama seçenekleri karıştırmak istersek burada yaparız
-      setTimeout(resetCard, 300);
+      setTimeout(loadNewCard, 400);
     }
 
     function wrong() {
       wrongSound.play();
       if (navigator.vibrate) navigator.vibrate(300);
-      // hafif geri dönme
       resetCard();
     }
 
-    function resetCard() {
-      // merkeze geri koy
-      card.style.transition = "top 0.2s ease, left 0.2s ease";
-      // varsayılan pozisyon: ekranın ortası alt taraf
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      const cardWidth = card.offsetWidth;
-      const cardHeight = card.offsetHeight;
-
-      card.style.left = (viewportWidth / 2 - cardWidth / 2) + "px";
-      card.style.top  = (viewportHeight * 0.75 - cardHeight / 2) + "px";
-
-      setTimeout(() => {
-        card.style.transition = "";
-      }, 220);
-    }
-
-    // sayfa ilk açıldığında kartı doğru yere koy
-    window.addEventListener("load", resetCard);
+    window.addEventListener("load", loadNewCard);
   </script>
 </body>
 </html>
