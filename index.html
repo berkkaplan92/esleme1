@@ -23,16 +23,14 @@
     justify-content: space-between;
     padding: 0 20px;
   }
-  .header img {
-    height: 80px;
-  }
+  .header img { height: 80px; }
   #game-area {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 30px;
-    margin-top: 50px;
+    justify-content: space-between;
+    height: 70vh;
+    width: 100%;
   }
   .item, .target {
     width: 120px;
@@ -58,11 +56,6 @@
     padding: 10px 20px;
     border-radius: 10px;
   }
-  @media (orientation: landscape) {
-    body {
-      flex-direction: row;
-    }
-  }
 </style>
 </head>
 <body>
@@ -71,10 +64,14 @@
     <img src="https://cdn-icons-png.flaticon.com/512/414/414974.png" alt="Bulut" />
   </div>
 
-  <div id="game-area" style="display:flex; flex-direction:column; align-items:center; justify-content:space-between; height:70vh;">
-  <div class="target" data-match="apple"><img src="https://cdn-icons-png.flaticon.com/512/415/415733.png" alt="Hedef Elma"></div>
-  <div class="item" draggable="true" data-item="apple"><img src="https://cdn-icons-png.flaticon.com/512/415/415733.png" alt="Elma"></div>
-</div>
+  <div id="game-area">
+    <div class="target" data-match="apple">
+      <img src="https://cdn-icons-png.flaticon.com/512/415/415733.png" alt="Hedef Elma">
+    </div>
+    <div class="item" draggable="true" data-item="apple">
+      <img src="https://cdn-icons-png.flaticon.com/512/415/415733.png" alt="Elma">
+    </div>
+  </div>
 
   <div id="symbols">⭐ Sembol: <span id="count">0</span></div>
 
@@ -82,52 +79,32 @@
   <audio id="wrongSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
 
   <script>
-    const items = document.querySelectorAll('.item');
-    const targets = document.querySelectorAll('.target');
+    const item = document.querySelector('.item');
+    const target = document.querySelector('.target');
     const symbolCount = document.getElementById('count');
     const correctSound = document.getElementById('correctSound');
     const wrongSound = document.getElementById('wrongSound');
     let count = 0;
 
-    items.forEach(item => {
-      item.addEventListener('dragstart', dragStart);
-    });
-
-    targets.forEach(target => {
-      target.addEventListener('dragover', dragOver);
-      target.addEventListener('drop', drop);
-    });
-
-    function dragStart(e) {
+    item.addEventListener('dragstart', (e) => {
       e.dataTransfer.setData('item', e.target.dataset.item);
-    }
+    });
 
-    function dragOver(e) {
-      e.preventDefault();
-    }
+    target.addEventListener('dragover', (e) => e.preventDefault());
 
-    function drop(e) {
+    target.addEventListener('drop', (e) => {
       e.preventDefault();
       const droppedItem = e.dataTransfer.getData('item');
-      const match = e.target.closest('.target').dataset.match;
+      const match = target.dataset.match;
       if (droppedItem === match) {
         correctSound.play();
         count++;
         symbolCount.textContent = count;
-        shuffleItems();
       } else {
         wrongSound.play();
         window.navigator.vibrate(300);
       }
-    }
-
-    function shuffleItems() {
-      const area = document.getElementById('game-area');
-      const children = Array.from(area.children).sort(() => Math.random() - 0.5);
-      children.forEach(child => area.appendChild(child));
-    }
+    });
   </script>
 </body>
 </html>
-
-
