@@ -3,56 +3,61 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Eşleme Oyunu V8</title>
+  <title>Eşleme Oyunu V9</title>
   <style>
     :root {
       --card-w: 180px;
       --card-h: 240px;
       --card-radius: 18px;
-      --frame-color: #0b84a5;
     }
 
     body {
       margin: 0;
       background: linear-gradient(to bottom right, #b3e5fc, #e1f5fe);
       height: 100vh;
-      font-family: "Comic Sans MS", sans-serif;
       overflow: hidden;
+      font-family: "Comic Sans MS", system-ui, sans-serif;
       position: relative;
     }
 
+    /* Yönerge */
     #instruction {
       position: absolute;
       top: 10px;
-      left: 15px;
+      left: 14px;
       background: rgba(255,255,255,0.9);
-      padding: 10px 20px;
-      border-radius: 10px;
-      font-weight: bold;
-      font-size: 16px;
+      padding: 8px 16px;
+      border-radius: 12px;
+      font-weight: 700;
       text-transform: uppercase;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+      z-index: 1000;
     }
 
+    /* Kartlar */
     #targetCard, #dragCard {
       width: var(--card-w);
       height: var(--card-h);
-      background: white;
+      background: #fff;
       border-radius: var(--card-radius);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
       border: 3px solid rgba(11,132,165,0.4);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
       position: absolute;
+    }
+
+    #targetCard {
+      top: 12vh;
       left: 50%;
       transform: translateX(-50%);
     }
 
-    #targetCard { top: 12vh; }
     #dragCard {
       top: 58vh;
+      /* left'i JS ile targetCard'dan alacağız */
       cursor: grab;
       touch-action: none;
       z-index: 999;
@@ -86,14 +91,15 @@
       color: #333;
     }
 
-    #scoreBoard {
+    /* Ahşap sembol tahtası */
+    #symbolBoard {
       position: absolute;
-      bottom: 40px;
-      right: 40px;
-      width: 240px;
-      height: 120px;
+      bottom: 30px;
+      right: 30px;
+      width: 280px;
+      height: 140px;
       background: url('https://cdn.pixabay.com/photo/2014/04/02/10/56/wood-306955_1280.png') no-repeat center/cover;
-      border-radius: 12px;
+      border-radius: 16px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.25);
       display: flex;
       align-items: center;
@@ -102,51 +108,77 @@
 
     #slots {
       display: flex;
-      gap: 10px;
+      gap: 12px;
     }
 
     .slot {
-      width: 36px;
-      height: 36px;
-      background: rgba(255,255,255,0.3);
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.25);
       border-radius: 50%;
-      box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      box-shadow: inset 0 0 6px rgba(0,0,0,0.25);
       position: relative;
+      overflow: visible;
     }
 
-    .star {
-      width: 30px;
-      height: 30px;
+    .slot .star {
+      width: 34px;
+      height: 34px;
       background: gold;
       border-radius: 50%;
       box-shadow: 0 0 8px rgba(255,215,0,0.8);
+      position: absolute;
+      top: 3px;
+      left: 3px;
       opacity: 0;
-      transform: scale(0);
-      transition: opacity 0.3s ease, transform 0.3s ease;
+      transform: scale(0.5);
+      transition: opacity 0.25s ease, transform 0.25s ease;
     }
 
-    .star.active {
+    .slot .star.active {
       opacity: 1;
       transform: scale(1);
     }
 
-    .correct-glow {
-      box-shadow: 0 0 20px rgba(46, 204, 113, 0.9);
-      border-color: rgba(46, 204, 113, 1);
-    }
-    .wrong-glow {
-      box-shadow: 0 0 20px rgba(231, 76, 60, 0.9);
-      border-color: rgba(231, 76, 60, 1);
+    /* Ekranın ortasında beliren uçan yıldız */
+    #flyStar {
+      position: absolute;
+      width: 55px;
+      height: 55px;
+      background: gold;
+      border-radius: 50%;
+      box-shadow: 0 0 12px rgba(255,215,0,0.9);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      opacity: 0;
+      z-index: 2000;
     }
 
+    .correct-glow {
+      box-shadow: 0 0 20px rgba(46,204,113,0.8);
+      border-color: rgba(46,204,113,1);
+    }
+
+    .wrong-glow {
+      box-shadow: 0 0 20px rgba(231,76,60,0.8);
+      border-color: rgba(231,76,60,1);
+    }
+
+    @media (max-width: 500px) {
+      #symbolBoard {
+        transform: scale(0.85);
+        right: 10px;
+      }
+    }
   </style>
 </head>
 <body>
+  <!-- Yönerge -->
   <div id="instruction">YÖNERGE: EŞLE</div>
 
+  <!-- Üst kart -->
   <div id="targetCard">
     <div class="card-title" id="targetTr">ELMA</div>
     <div class="card-img-wrap">
@@ -155,6 +187,7 @@
     <div class="card-bottom" id="targetEn">Apple</div>
   </div>
 
+  <!-- Alt kart (sürüklenen) -->
   <div id="dragCard">
     <div class="card-title" id="dragTr">ELMA</div>
     <div class="card-img-wrap">
@@ -163,7 +196,8 @@
     <div class="card-bottom" id="dragEn">Apple</div>
   </div>
 
-  <div id="scoreBoard">
+  <!-- Ahşap sembol tahtası -->
+  <div id="symbolBoard">
     <div id="slots">
       <div class="slot" id="slot1"><div class="star"></div></div>
       <div class="slot" id="slot2"><div class="star"></div></div>
@@ -173,8 +207,13 @@
     </div>
   </div>
 
+  <!-- Ortada beliren uçan yıldız -->
+  <div id="flyStar"></div>
+
+  <!-- Sesler -->
   <audio id="correctSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_bf4d03054b.mp3?filename=correct-2-46134.mp3"></audio>
   <audio id="symbolSound" src="https://cdn.pixabay.com/download/audio/2022/03/09/audio_85786f961a.mp3?filename=success-1-6297.mp3"></audio>
+  <!-- sayılar -->
   <audio id="count1" src="https://cdn.pixabay.com/download/audio/2023/03/26/audio_8f0108c3d7.mp3?filename=one-147090.mp3"></audio>
   <audio id="count2" src="https://cdn.pixabay.com/download/audio/2023/03/26/audio_21a81569a7.mp3?filename=two-147093.mp3"></audio>
   <audio id="count3" src="https://cdn.pixabay.com/download/audio/2023/03/26/audio_54507b763a.mp3?filename=three-147091.mp3"></audio>
@@ -183,19 +222,20 @@
   <audio id="praise" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c3b37f01ab.mp3?filename=kids-cheer-43898.mp3"></audio>
 
   <script>
+    // veri havuzu
     const pool = [
-      {id:"elma", tr:"ELMA", en:"Apple"},
-      {id:"muz", tr:"MUZ", en:"Banana"},
-      {id:"armut", tr:"ARMUT", en:"Pear"},
-      {id:"patlican", tr:"PATLICAN", en:"Eggplant"},
-      {id:"domates", tr:"DOMATES", en:"Tomato"},
-      {id:"sarimsak", tr:"SARIMSAK", en:"Garlic"},
-      {id:"araba", tr:"ARABA", en:"Car"},
-      {id:"otobus", tr:"OTOBÜS", en:"Bus"},
-      {id:"ucak", tr:"UÇAK", en:"Airplane"},
-      {id:"kopek", tr:"KÖPEK", en:"Dog"},
-      {id:"kedi", tr:"KEDİ", en:"Cat"},
-      {id:"inek", tr:"İNEK", en:"Cow"}
+      {id:"elma",      tr:"ELMA",      en:"Apple"},
+      {id:"muz",       tr:"MUZ",       en:"Banana"},
+      {id:"armut",     tr:"ARMUT",     en:"Pear"},
+      {id:"patlican",  tr:"PATLICAN",  en:"Eggplant"},
+      {id:"domates",   tr:"DOMATES",   en:"Tomato"},
+      {id:"sarımsak",  tr:"SARIMSAK",  en:"Garlic"},
+      {id:"araba",     tr:"ARABA",     en:"Car"},
+      {id:"otobus",    tr:"OTOBÜS",    en:"Bus"},
+      {id:"ucak",      tr:"UÇAK",      en:"Airplane"},
+      {id:"kopek",     tr:"KÖPEK",     en:"Dog"},
+      {id:"kedi",      tr:"KEDİ",      en:"Cat"},
+      {id:"inek",      tr:"İNEK",      en:"Cow"}
     ];
 
     const targetCard = document.getElementById('targetCard');
@@ -206,32 +246,54 @@
     const targetEn   = document.getElementById('targetEn');
     const dragTr     = document.getElementById('dragTr');
     const dragEn     = document.getElementById('dragEn');
-    const instEl     = document.getElementById('instruction');
+    const instruction= document.getElementById('instruction');
+
     const correctSound = document.getElementById('correctSound');
-    const symbolSound = document.getElementById('symbolSound');
-    const countAudios = [null,
+    const symbolSound  = document.getElementById('symbolSound');
+    const countAudios  = [
+      null,
       document.getElementById('count1'),
       document.getElementById('count2'),
       document.getElementById('count3'),
       document.getElementById('count4'),
-      document.getElementById('count5')
+      document.getElementById('count5'),
     ];
-    const praiseAudio = document.getElementById('praise');
+    const praiseAudio  = document.getElementById('praise');
 
-    let score = 0;
+    const flyStar = document.getElementById('flyStar');
+    const slots = [
+      document.querySelector('#slot1 .star'),
+      document.querySelector('#slot2 .star'),
+      document.querySelector('#slot3 .star'),
+      document.querySelector('#slot4 .star'),
+      document.querySelector('#slot5 .star')
+    ];
+
     let currentItem = null;
     let isDragging = false;
     let startX = 0, startY = 0, cardStartX = 0, cardStartY = 0;
+    let starCount = 0;
+    let audioReady = false;
 
-    const slots = [...document.querySelectorAll(".slot .star")];
+    // ses izinleri
+    document.body.addEventListener('click', () => {
+      if (!audioReady) {
+        correctSound.play().catch(()=>{});
+        symbolSound.play().catch(()=>{});
+        countAudios.forEach(a=>a && a.pause());
+        praiseAudio.pause();
+        audioReady = true;
+      }
+    }, {once:true});
 
     function pickRandom() {
       return pool[Math.floor(Math.random() * pool.length)];
     }
 
-    function alignCards() {
-      const targetRect = targetCard.getBoundingClientRect();
-      dragCard.style.left = `${targetRect.left}px`;
+    function alignDragToTarget() {
+      const tRect = targetCard.getBoundingClientRect();
+      dragCard.style.left = tRect.left + "px";
+      dragCard.style.top  = "58vh"; // sabit yüksekliğimiz
     }
 
     function loadNew() {
@@ -241,12 +303,12 @@
       dragImg.src = src;
       targetTr.textContent = currentItem.tr;
       targetEn.textContent = currentItem.en;
-      dragTr.textContent = currentItem.tr;
-      dragEn.textContent = currentItem.en;
-      instEl.textContent = `YÖNERGE: ${currentItem.tr} EŞLE`;
+      dragTr.textContent   = currentItem.tr;
+      dragEn.textContent   = currentItem.en;
+      instruction.textContent = `YÖNERGE: ${currentItem.tr} EŞLE`;
       targetCard.classList.remove('correct-glow','wrong-glow');
       dragCard.classList.remove('correct-glow','wrong-glow');
-      alignCards();
+      alignDragToTarget();
     }
 
     function dragStart(e) {
@@ -267,8 +329,8 @@
     function dragging(e) {
       if (!isDragging) return;
       const p = e.touches ? e.touches[0] : e;
-      dragCard.style.left = (cardStartX + p.clientX - startX) + 'px';
-      dragCard.style.top  = (cardStartY + p.clientY - startY) + 'px';
+      dragCard.style.left = (cardStartX + p.clientX - startX) + "px";
+      dragCard.style.top  = (cardStartY + p.clientY - startY) + "px";
     }
 
     function dragEnd() {
@@ -279,61 +341,103 @@
       document.removeEventListener('mouseup', dragEnd);
       document.removeEventListener('touchend', dragEnd);
 
-      const dragRect = dragCard.getBoundingClientRect();
-      const targetRect = targetCard.getBoundingClientRect();
-      const cx = dragRect.left + dragRect.width / 2;
-      const cy = dragRect.top + dragRect.height / 2;
-      const hit = cx > targetRect.left && cx < targetRect.right && cy > targetRect.top && cy < targetRect.bottom;
+      const dRect = dragCard.getBoundingClientRect();
+      const tRect = targetCard.getBoundingClientRect();
+      const cx = dRect.left + dRect.width / 2;
+      const cy = dRect.top + dRect.height / 2;
+      const hit = cx > tRect.left && cx < tRect.right && cy > tRect.top && cy < tRect.bottom;
 
       if (hit) handleCorrect();
       else handleWrong();
     }
 
     function handleCorrect() {
-      score++;
-      correctSound.play();
-      symbolSound.play();
       targetCard.classList.add('correct-glow');
       dragCard.classList.add('correct-glow');
-
-      const slot = slots[score-1];
-      if (slot) {
-        slot.classList.add('active');
-      }
-
-      if (score === 5) {
-        let i = 1;
-        const interval = setInterval(()=>{
-          if (i<=5) countAudios[i++].play();
-          else {
-            clearInterval(interval);
-            praiseAudio.play();
-            setTimeout(()=> {
-              slots.forEach(s=>s.classList.remove('active'));
-              score = 0;
-            }, 4000);
-          }
-        },1000);
-      }
-
-      setTimeout(loadNew, 1000);
+      correctSound.currentTime = 0;
+      correctSound.play().catch(()=>{});
+      // yıldız animasyonu
+      showFlyingStar().then(() => {
+        // tahtaya yerleştir
+        placeStarOnBoard();
+      });
+      // yeni set
+      setTimeout(loadNew, 900);
     }
 
     function handleWrong() {
       targetCard.classList.add('wrong-glow');
       dragCard.classList.add('wrong-glow');
-      if (navigator.vibrate) navigator.vibrate(120);
       setTimeout(() => {
         targetCard.classList.remove('wrong-glow');
         dragCard.classList.remove('wrong-glow');
-        alignCards();
+        alignDragToTarget();
       }, 500);
     }
 
-    window.addEventListener('resize', alignCards);
+    function showFlyingStar() {
+      return new Promise(resolve => {
+        flyStar.style.opacity = 1;
+        flyStar.style.transition = "opacity .15s ease, transform .15s ease";
+        flyStar.style.transform = "translate(-50%, -50%) scale(1)";
+        symbolSound.currentTime = 0;
+        symbolSound.play().catch(()=>{});
+        setTimeout(() => resolve(), 300);
+      });
+    }
+
+    function placeStarOnBoard() {
+      if (starCount < 5) {
+        const slotStar = slots[starCount];
+        // slotun konumunu al
+        const slotRect = slotStar.parentElement.getBoundingClientRect();
+        const flyRect  = flyStar.getBoundingClientRect();
+        const dx = slotRect.left + 3 - flyRect.left;
+        const dy = slotRect.top + 3 - flyRect.top;
+
+        flyStar.style.transition = "transform .35s ease, opacity .35s ease";
+        flyStar.style.transform = `translate(${dx}px, ${dy}px) scale(0.6)`;
+        setTimeout(() => {
+          flyStar.style.opacity = 0;
+          flyStar.style.transform = "translate(-50%, -50%) scale(0)";
+          slotStar.classList.add('active');
+          starCount++;
+          if (starCount === 5) {
+            startCountingDown();
+          }
+        }, 400);
+      }
+    }
+
+    function startCountingDown() {
+      // 1,2,3,4,5 sesleri + aferin
+      let i = 1;
+      const interval = setInterval(() => {
+        if (i <= 5) {
+          countAudios[i].currentTime = 0;
+          countAudios[i].play().catch(()=>{});
+          i++;
+        } else {
+          clearInterval(interval);
+          praiseAudio.currentTime = 0;
+          praiseAudio.play().catch(()=>{});
+          // sembolleri temizle ama biraz sonra
+          setTimeout(() => {
+            slots.forEach(s => s.classList.remove('active'));
+            starCount = 0;
+          }, 2000);
+        }
+      }, 1000);
+    }
+
+    window.addEventListener('resize', alignDragToTarget);
     dragCard.addEventListener('mousedown', dragStart);
     dragCard.addEventListener('touchstart', dragStart, {passive:false});
-    window.addEventListener('load', () => { loadNew(); alignCards(); });
+
+    window.addEventListener('load', () => {
+      loadNew();
+      alignDragToTarget();
+    });
   </script>
 </body>
 </html>
