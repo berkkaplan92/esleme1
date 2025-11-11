@@ -1,177 +1,207 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Eşleme Oyunu V5</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eşleme Oyunu V6</title>
   <style>
     :root {
-      --card-size: 140px;
+      --card-w: 180px;
+      --card-h: 240px;
+      --card-radius: 16px;
+      --frame-color: #0b84a5;
     }
+
     body {
       margin: 0;
-      height: 100vh;
       background: linear-gradient(to bottom right, #b3e5fc, #e1f5fe);
+      height: 100vh;
       font-family: "Comic Sans MS", system-ui, sans-serif;
       overflow: hidden;
-    }
-    .game-wrap {
       position: relative;
-      width: 100%;
-      height: 100%;
     }
-    /* Yönerge */
+
+    /* YÖNERGE */
     #instruction {
       position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255,255,255,0.85);
-      padding: 6px 16px;
-      border-radius: 12px;
-      font-weight: 600;
+      top: 12px;
+      left: 12px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-weight: 700;
       font-size: 14px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-      z-index: 50;
-      text-align: center;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      z-index: 1000;
     }
-    /* Üst kart */
+
+    /* Üst kart (sabit) */
     #targetCard {
       position: absolute;
-      top: 11vh;              /* burayı istersen 9-12 arası oynatabilirsin */
+      top: 12vh; /* biraz daha yukarı aldık */
       left: 50%;
       transform: translateX(-50%);
-      width: var(--card-size);
-      height: var(--card-size);
+      width: var(--card-w);
+      height: var(--card-h);
       background: #fff;
-      border-radius: 20px;
+      border-radius: var(--card-radius);
       box-shadow: 0 4px 10px rgba(0,0,0,0.12);
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      transition: box-shadow .15s ease;
+      justify-content: flex-start;
+      border: 3px solid rgba(11,132,165,0.4);
+      position: absolute;
     }
-    /* Alt kart (başlangıç pozisyonu) */
+
+    /* Alt kart (sürüklenen) */
     #dragCard {
       position: absolute;
-      top: 58vh;              /* dün akşam beğendiğin yükseklik */
+      top: 58vh; /* dün senin beğendiğin yükseklik */
       left: 50%;
       transform: translateX(-50%);
-      width: var(--card-size);
-      height: var(--card-size);
+      width: var(--card-w);
+      height: var(--card-h);
       background: #fff;
-      border-radius: 20px;
+      border-radius: var(--card-radius);
       box-shadow: 0 4px 10px rgba(0,0,0,0.12);
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
+      border: 3px solid rgba(11,132,165,0.4);
       cursor: grab;
       touch-action: none;
-      z-index: 100;
+      z-index: 999;
     }
+
+    /* kart içi üst başlık */
+    .card-title {
+      width: 100%;
+      text-align: center;
+      font-weight: 700;
+      font-size: 16px;
+      margin-top: 8px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    /* görsel alanı */
+    .card-img-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
     .card-img {
-      width: 100px;
-      height: 100px;
+      max-width: 120px;
+      max-height: 120px;
       object-fit: contain;
       pointer-events: none;
     }
-    .labels {
-      position: absolute;
-      bottom: -42px;
-      width: 160px;
-      text-align: center;
-      line-height: 1.1;
+
+    /* İngilizce isim altta */
+    .card-bottom {
+      margin-bottom: 10px;
+      font-size: 13px;
+      color: #444;
     }
-    .label-tr {
-      font-weight: 700;
-      font-size: 14px;
-      color: #333;
-    }
-    .label-en {
-      font-size: 12px;
-      color: #555;
-    }
+
+    /* sembol kutusu */
     #scoreBox {
       position: absolute;
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(255,255,255,0.8);
-      padding: 6px 16px;
+      background: rgba(255,255,255,0.9);
+      padding: 6px 14px;
       border-radius: 14px;
       font-weight: 600;
       font-size: 16px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.12);
     }
+
+    /* doğru/yanlış ışıkları */
     .correct-glow {
-      box-shadow: 0 0 16px rgba(46, 204, 113, 0.9);
+      box-shadow: 0 0 20px rgba(46, 204, 113, 0.9);
+      border-color: rgba(46, 204, 113, 1);
     }
-    @media (min-width: 900px) {
-      #instruction {
-        top: 12px;
-        font-size: 15px;
+    .wrong-glow {
+      box-shadow: 0 0 20px rgba(231, 76, 60, 0.9);
+      border-color: rgba(231, 76, 60, 1);
+    }
+
+    @media (max-width: 480px) {
+      :root {
+        --card-w: 150px;
+        --card-h: 210px;
       }
-      #targetCard { top: 10vh; }
-      #dragCard { top: 57vh; }
+      #instruction {
+        font-size: 12px;
+      }
+      #targetCard { top: 11vh; }
+      #dragCard { top: 59vh; }
     }
   </style>
 </head>
 <body>
-  <div class="game-wrap">
-    <div id="instruction">Yönerge: eşle</div>
-    <div id="targetCard">
+  <div id="instruction">YÖNERGE: EŞLE</div>
+
+  <!-- üst kart -->
+  <div id="targetCard">
+    <div class="card-title" id="targetTr">ELMA</div>
+    <div class="card-img-wrap">
       <img id="targetImg" class="card-img" src="" alt="">
-      <div class="labels">
-        <div id="targetTr" class="label-tr"></div>
-        <div id="targetEn" class="label-en"></div>
-      </div>
     </div>
-    <div id="dragCard">
-      <img id="dragImg" class="card-img" src="" alt="">
-      <div class="labels">
-        <div id="dragTr" class="label-tr"></div>
-        <div id="dragEn" class="label-en"></div>
-      </div>
-    </div>
-    <div id="scoreBox">⭐ Sembol: <span id="scoreVal">0</span></div>
+    <div class="card-bottom" id="targetEn">Apple</div>
   </div>
 
-  <!-- sesler -->
+  <!-- sürüklenen kart -->
+  <div id="dragCard">
+    <div class="card-title" id="dragTr">ELMA</div>
+    <div class="card-img-wrap">
+      <img id="dragImg" class="card-img" src="" alt="">
+    </div>
+    <div class="card-bottom" id="dragEn">Apple</div>
+  </div>
+
+  <div id="scoreBox">⭐ Sembol: <span id="scoreVal">0</span></div>
+
+  <!-- sadece doğru sesini tuttum -->
   <audio id="correctSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_bf4d03054b.mp3?filename=correct-2-46134.mp3"></audio>
-  <audio id="wrongSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_21cda77a64.mp3?filename=error-126627.mp3"></audio>
 
   <script>
-    // Görsel havuzu — assets klasöründe bu isimlerle olmalı
+    // Görsel havuzu (assets klasöründeki isimlerle uyuşmalı)
     const pool = [
-      {id:"elma", tr:"Elma", en:"Apple"},
-      {id:"muz", tr:"Muz", en:"Banana"},
-      {id:"armut", tr:"Armut", en:"Pear"},
-      {id:"patlican", tr:"Patlıcan", en:"Eggplant"},
-      {id:"domates", tr:"Domates", en:"Tomato"},
-      {id:"sarımsak", tr:"Sarımsak", en:"Garlic"},
-      {id:"araba", tr:"Araba", en:"Car"},
-      {id:"otobus", tr:"Otobüs", en:"Bus"},
-      {id:"ucak", tr:"Uçak", en:"Airplane"},
-      {id:"kopek", tr:"Köpek", en:"Dog"},
-      {id:"kedi", tr:"Kedi", en:"Cat"},
-      {id:"inek", tr:"İnek", en:"Cow"}
-      // buraya kalan 50'liyi yavaş yavaş eklersin
+      {id:"elma", tr:"ELMA", en:"Apple"},
+      {id:"muz", tr:"MUZ", en:"Banana"},
+      {id:"armut", tr:"ARMUT", en:"Pear"},
+      {id:"patlican", tr:"PATLICAN", en:"Eggplant"},
+      {id:"domates", tr:"DOMATES", en:"Tomato"},
+      {id:"sarımsak", tr:"SARIMSAK", en:"Garlic"},
+      {id:"araba", tr:"ARABA", en:"Car"},
+      {id:"otobus", tr:"OTOBÜS", en:"Bus"},
+      {id:"ucak", tr:"UÇAK", en:"Airplane"},
+      {id:"kopek", tr:"KÖPEK", en:"Dog"},
+      {id:"kedi", tr:"KEDİ", en:"Cat"},
+      {id:"inek", tr:"İNEK", en:"Cow"}
     ];
 
     const targetCard = document.getElementById('targetCard');
-    const dragCard = document.getElementById('dragCard');
-    const targetImg = document.getElementById('targetImg');
-    const dragImg = document.getElementById('dragImg');
-    const targetTr = document.getElementById('targetTr');
-    const targetEn = document.getElementById('targetEn');
-    const dragTr = document.getElementById('dragTr');
-    const dragEn = document.getElementById('dragEn');
-    const instruction = document.getElementById('instruction');
-    const scoreVal = document.getElementById('scoreVal');
+    const dragCard   = document.getElementById('dragCard');
+    const targetImg  = document.getElementById('targetImg');
+    const dragImg    = document.getElementById('dragImg');
+    const targetTr   = document.getElementById('targetTr');
+    const targetEn   = document.getElementById('targetEn');
+    const dragTr     = document.getElementById('dragTr');
+    const dragEn     = document.getElementById('dragEn');
+    const instEl     = document.getElementById('instruction');
+    const scoreVal   = document.getElementById('scoreVal');
     const correctSound = document.getElementById('correctSound');
-    const wrongSound = document.getElementById('wrongSound');
 
     let score = 0;
     let currentItem = null;
@@ -180,49 +210,51 @@
     let cardStartX = 0, cardStartY = 0;
 
     function pickRandom() {
-      const i = Math.floor(Math.random() * pool.length);
-      return pool[i];
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function centerDragCard() {
+      // ekran genişliğine göre ortala
+      const cardW = dragCard.offsetWidth;
+      const left = (window.innerWidth / 2) - (cardW / 2);
+      dragCard.style.left = left + "px";
+      dragCard.style.top = "58vh";
     }
 
     function loadNew() {
       currentItem = pickRandom();
       const src = `assets/${currentItem.id}.png`;
 
+      // üst kart
       targetImg.src = src;
-      dragImg.src = src;
-
       targetTr.textContent = currentItem.tr;
       targetEn.textContent = currentItem.en;
+
+      // alt kart
+      dragImg.src = src;
       dragTr.textContent = currentItem.tr;
       dragEn.textContent = currentItem.en;
 
-      instruction.textContent = `Yönerge: ${currentItem.tr.toLowerCase()} eşle.`;
+      // yönerge
+      instEl.textContent = `YÖNERGE: ${currentItem.tr} EŞLE`;
 
-      // yerine dön
-      resetDragCard();
+      // önceki ışıkları temizle
+      targetCard.classList.remove('correct-glow', 'wrong-glow');
+      dragCard.classList.remove('correct-glow', 'wrong-glow');
 
-      // ışık varsa kaldır
-      targetCard.classList.remove('correct-glow');
-      dragCard.classList.remove('correct-glow');
-    }
-
-    function resetDragCard() {
+      // kartı yerine koy
       dragCard.style.transition = "top 0.2s ease, left 0.2s ease";
-      const vw = window.innerWidth;
-      dragCard.style.left = (vw / 2 - dragCard.offsetWidth / 2) + "px";
-      dragCard.style.top = "58vh";
-      setTimeout(() => {
-        dragCard.style.transition = "";
-      }, 220);
+      centerDragCard();
+      setTimeout(() => dragCard.style.transition = "", 250);
     }
 
-    // sürüklemeyi başlat
+    // sürükleme başlangıç
     function dragStart(e) {
       e.preventDefault();
       isDragging = true;
-      const evt = e.touches ? e.touches[0] : e;
-      startX = evt.clientX;
-      startY = evt.clientY;
+      const point = e.touches ? e.touches[0] : e;
+      startX = point.clientX;
+      startY = point.clientY;
       const rect = dragCard.getBoundingClientRect();
       cardStartX = rect.left;
       cardStartY = rect.top;
@@ -236,9 +268,9 @@
 
     function dragging(e) {
       if (!isDragging) return;
-      const evt = e.touches ? e.touches[0] : e;
-      const dx = evt.clientX - startX;
-      const dy = evt.clientY - startY;
+      const point = e.touches ? e.touches[0] : e;
+      const dx = point.clientX - startX;
+      const dy = point.clientY - startY;
       dragCard.style.left = (cardStartX + dx) + "px";
       dragCard.style.top  = (cardStartY + dy) + "px";
     }
@@ -259,39 +291,48 @@
       const centerX = dragRect.left + dragRect.width / 2;
       const centerY = dragRect.top + dragRect.height / 2;
 
-      if (centerX > targetRect.left &&
-          centerX < targetRect.right &&
-          centerY > targetRect.top &&
-          centerY < targetRect.bottom) {
-        // doğru
-        correct();
+      const isHit =
+        centerX > targetRect.left &&
+        centerX < targetRect.right &&
+        centerY > targetRect.top &&
+        centerY < targetRect.bottom;
+
+      if (isHit) {
+        handleCorrect();
       } else {
-        wrong();
+        handleWrong();
       }
     }
 
-    function correct() {
+    function handleCorrect() {
       score++;
       scoreVal.textContent = score;
-      correctSound.play();
       targetCard.classList.add('correct-glow');
       dragCard.classList.add('correct-glow');
+      correctSound.play();
       setTimeout(loadNew, 900);
     }
 
-    function wrong() {
-      wrongSound.play();
-      if (navigator.vibrate) navigator.vibrate(200);
-      resetDragCard();
+    function handleWrong() {
+      // ses yok, sadece kırmızı yanacak
+      targetCard.classList.add('wrong-glow');
+      dragCard.classList.add('wrong-glow');
+      if (navigator.vibrate) navigator.vibrate(120);
+      setTimeout(() => {
+        targetCard.classList.remove('wrong-glow');
+        dragCard.classList.remove('wrong-glow');
+        centerDragCard();
+      }, 400);
     }
 
-    // event bağla
+    window.addEventListener('resize', centerDragCard);
     dragCard.addEventListener('mousedown', dragStart);
     dragCard.addEventListener('touchstart', dragStart, {passive:false});
-    window.addEventListener('resize', resetDragCard);
 
-    // başlangıç
-    window.addEventListener('load', loadNew);
+    window.addEventListener('load', () => {
+      loadNew();
+      centerDragCard();
+    });
   </script>
 </body>
 </html>
