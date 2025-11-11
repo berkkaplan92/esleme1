@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Eşleme Oyunu V6</title>
+  <title>Eşleme Oyunu V7</title>
   <style>
     :root {
       --card-w: 180px;
@@ -21,7 +21,6 @@
       position: relative;
     }
 
-    /* YÖNERGE */
     #instruction {
       position: absolute;
       top: 12px;
@@ -37,12 +36,7 @@
       z-index: 1000;
     }
 
-    /* Üst kart (sabit) */
-    #targetCard {
-      position: absolute;
-      top: 12vh; /* biraz daha yukarı aldık */
-      left: 50%;
-      transform: translateX(-50%);
+    #targetCard, #dragCard {
       width: var(--card-w);
       height: var(--card-h);
       background: #fff;
@@ -54,30 +48,18 @@
       justify-content: flex-start;
       border: 3px solid rgba(11,132,165,0.4);
       position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
     }
 
-    /* Alt kart (sürüklenen) */
+    #targetCard { top: 12vh; }
     #dragCard {
-      position: absolute;
-      top: 58vh; /* dün senin beğendiğin yükseklik */
-      left: 50%;
-      transform: translateX(-50%);
-      width: var(--card-w);
-      height: var(--card-h);
-      background: #fff;
-      border-radius: var(--card-radius);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      border: 3px solid rgba(11,132,165,0.4);
+      top: 58vh;
       cursor: grab;
       touch-action: none;
       z-index: 999;
     }
 
-    /* kart içi üst başlık */
     .card-title {
       width: 100%;
       text-align: center;
@@ -88,7 +70,6 @@
       text-transform: uppercase;
     }
 
-    /* görsel alanı */
     .card-img-wrap {
       flex: 1;
       display: flex;
@@ -104,19 +85,48 @@
       pointer-events: none;
     }
 
-    /* İngilizce isim altta */
     .card-bottom {
       margin-bottom: 10px;
       font-size: 13px;
       color: #444;
     }
 
-    /* sembol kutusu */
-    #scoreBox {
+    #scoreBoard {
       position: absolute;
       bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #basket {
+      width: 60px;
+      height: 60px;
+      background: url('https://cdn-icons-png.flaticon.com/512/616/616408.png') no-repeat center/contain;
+      position: relative;
+    }
+
+    #stars {
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+    }
+
+    .star {
+      width: 12px;
+      height: 12px;
+      background: gold;
+      border-radius: 50%;
+      box-shadow: 0 0 4px rgba(255,215,0,0.6);
+    }
+
+    #scoreBox {
       background: rgba(255,255,255,0.9);
       padding: 6px 14px;
       border-radius: 14px;
@@ -125,7 +135,6 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.12);
     }
 
-    /* doğru/yanlış ışıkları */
     .correct-glow {
       box-shadow: 0 0 20px rgba(46, 204, 113, 0.9);
       border-color: rgba(46, 204, 113, 1);
@@ -135,23 +144,20 @@
       border-color: rgba(231, 76, 60, 1);
     }
 
-    @media (max-width: 480px) {
-      :root {
-        --card-w: 150px;
-        --card-h: 210px;
-      }
-      #instruction {
-        font-size: 12px;
-      }
-      #targetCard { top: 11vh; }
-      #dragCard { top: 59vh; }
+    @keyframes reward {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+      100% { transform: scale(1); }
+    }
+
+    .reward {
+      animation: reward 0.5s ease;
     }
   </style>
 </head>
 <body>
   <div id="instruction">YÖNERGE: EŞLE</div>
 
-  <!-- üst kart -->
   <div id="targetCard">
     <div class="card-title" id="targetTr">ELMA</div>
     <div class="card-img-wrap">
@@ -160,7 +166,6 @@
     <div class="card-bottom" id="targetEn">Apple</div>
   </div>
 
-  <!-- sürüklenen kart -->
   <div id="dragCard">
     <div class="card-title" id="dragTr">ELMA</div>
     <div class="card-img-wrap">
@@ -169,20 +174,23 @@
     <div class="card-bottom" id="dragEn">Apple</div>
   </div>
 
-  <div id="scoreBox">⭐ Sembol: <span id="scoreVal">0</span></div>
+  <div id="scoreBoard">
+    <div id="scoreBox">⭐ Sembol: <span id="scoreVal">0</span></div>
+    <div id="basket">
+      <div id="stars"></div>
+    </div>
+  </div>
 
-  <!-- sadece doğru sesini tuttum -->
   <audio id="correctSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_bf4d03054b.mp3?filename=correct-2-46134.mp3"></audio>
 
   <script>
-    // Görsel havuzu (assets klasöründeki isimlerle uyuşmalı)
     const pool = [
       {id:"elma", tr:"ELMA", en:"Apple"},
       {id:"muz", tr:"MUZ", en:"Banana"},
       {id:"armut", tr:"ARMUT", en:"Pear"},
       {id:"patlican", tr:"PATLICAN", en:"Eggplant"},
       {id:"domates", tr:"DOMATES", en:"Tomato"},
-      {id:"sarımsak", tr:"SARIMSAK", en:"Garlic"},
+      {id:"sarimsak", tr:"SARIMSAK", en:"Garlic"},
       {id:"araba", tr:"ARABA", en:"Car"},
       {id:"otobus", tr:"OTOBÜS", en:"Bus"},
       {id:"ucak", tr:"UÇAK", en:"Airplane"},
@@ -202,64 +210,60 @@
     const instEl     = document.getElementById('instruction');
     const scoreVal   = document.getElementById('scoreVal');
     const correctSound = document.getElementById('correctSound');
+    const starsEl = document.getElementById('stars');
 
     let score = 0;
     let currentItem = null;
     let isDragging = false;
-    let startX = 0, startY = 0;
-    let cardStartX = 0, cardStartY = 0;
+    let startX = 0, startY = 0, cardStartX = 0, cardStartY = 0;
 
     function pickRandom() {
       return pool[Math.floor(Math.random() * pool.length)];
     }
 
     function centerDragCard() {
-      // ekran genişliğine göre ortala
-      const cardW = dragCard.offsetWidth;
-      const left = (window.innerWidth / 2) - (cardW / 2);
-      dragCard.style.left = left + "px";
+      const targetRect = targetCard.getBoundingClientRect();
+      dragCard.style.left = `${targetRect.left}px`;
       dragCard.style.top = "58vh";
+    }
+
+    function updateStars() {
+      starsEl.innerHTML = '';
+      for (let i = 0; i < score % 5; i++) {
+        const s = document.createElement('div');
+        s.classList.add('star');
+        starsEl.appendChild(s);
+      }
+      if (score % 5 === 0 && score > 0) {
+        document.getElementById('basket').classList.add('reward');
+        setTimeout(()=>document.getElementById('basket').classList.remove('reward'),500);
+      }
     }
 
     function loadNew() {
       currentItem = pickRandom();
       const src = `assets/${currentItem.id}.png`;
-
-      // üst kart
       targetImg.src = src;
+      dragImg.src = src;
       targetTr.textContent = currentItem.tr;
       targetEn.textContent = currentItem.en;
-
-      // alt kart
-      dragImg.src = src;
       dragTr.textContent = currentItem.tr;
       dragEn.textContent = currentItem.en;
-
-      // yönerge
       instEl.textContent = `YÖNERGE: ${currentItem.tr} EŞLE`;
-
-      // önceki ışıkları temizle
-      targetCard.classList.remove('correct-glow', 'wrong-glow');
-      dragCard.classList.remove('correct-glow', 'wrong-glow');
-
-      // kartı yerine koy
-      dragCard.style.transition = "top 0.2s ease, left 0.2s ease";
+      targetCard.classList.remove('correct-glow','wrong-glow');
+      dragCard.classList.remove('correct-glow','wrong-glow');
       centerDragCard();
-      setTimeout(() => dragCard.style.transition = "", 250);
     }
 
-    // sürükleme başlangıç
     function dragStart(e) {
       e.preventDefault();
       isDragging = true;
-      const point = e.touches ? e.touches[0] : e;
-      startX = point.clientX;
-      startY = point.clientY;
-      const rect = dragCard.getBoundingClientRect();
-      cardStartX = rect.left;
-      cardStartY = rect.top;
-      dragCard.style.cursor = "grabbing";
-
+      const p = e.touches ? e.touches[0] : e;
+      startX = p.clientX;
+      startY = p.clientY;
+      const r = dragCard.getBoundingClientRect();
+      cardStartX = r.left;
+      cardStartY = r.top;
       document.addEventListener('mousemove', dragging);
       document.addEventListener('touchmove', dragging, {passive:false});
       document.addEventListener('mouseup', dragEnd);
@@ -268,53 +272,40 @@
 
     function dragging(e) {
       if (!isDragging) return;
-      const point = e.touches ? e.touches[0] : e;
-      const dx = point.clientX - startX;
-      const dy = point.clientY - startY;
-      dragCard.style.left = (cardStartX + dx) + "px";
-      dragCard.style.top  = (cardStartY + dy) + "px";
+      const p = e.touches ? e.touches[0] : e;
+      dragCard.style.left = (cardStartX + p.clientX - startX) + 'px';
+      dragCard.style.top  = (cardStartY + p.clientY - startY) + 'px';
     }
 
     function dragEnd() {
       if (!isDragging) return;
       isDragging = false;
-      dragCard.style.cursor = "grab";
-
       document.removeEventListener('mousemove', dragging);
       document.removeEventListener('touchmove', dragging);
       document.removeEventListener('mouseup', dragEnd);
       document.removeEventListener('touchend', dragEnd);
 
-      // çakışma kontrolü
       const dragRect = dragCard.getBoundingClientRect();
       const targetRect = targetCard.getBoundingClientRect();
-      const centerX = dragRect.left + dragRect.width / 2;
-      const centerY = dragRect.top + dragRect.height / 2;
+      const cx = dragRect.left + dragRect.width / 2;
+      const cy = dragRect.top + dragRect.height / 2;
+      const hit = cx > targetRect.left && cx < targetRect.right && cy > targetRect.top && cy < targetRect.bottom;
 
-      const isHit =
-        centerX > targetRect.left &&
-        centerX < targetRect.right &&
-        centerY > targetRect.top &&
-        centerY < targetRect.bottom;
-
-      if (isHit) {
-        handleCorrect();
-      } else {
-        handleWrong();
-      }
+      if (hit) handleCorrect();
+      else handleWrong();
     }
 
     function handleCorrect() {
       score++;
       scoreVal.textContent = score;
+      updateStars();
+      correctSound.play();
       targetCard.classList.add('correct-glow');
       dragCard.classList.add('correct-glow');
-      correctSound.play();
-      setTimeout(loadNew, 900);
+      setTimeout(loadNew, 1000);
     }
 
     function handleWrong() {
-      // ses yok, sadece kırmızı yanacak
       targetCard.classList.add('wrong-glow');
       dragCard.classList.add('wrong-glow');
       if (navigator.vibrate) navigator.vibrate(120);
@@ -322,17 +313,13 @@
         targetCard.classList.remove('wrong-glow');
         dragCard.classList.remove('wrong-glow');
         centerDragCard();
-      }, 400);
+      }, 500);
     }
 
     window.addEventListener('resize', centerDragCard);
     dragCard.addEventListener('mousedown', dragStart);
     dragCard.addEventListener('touchstart', dragStart, {passive:false});
-
-    window.addEventListener('load', () => {
-      loadNew();
-      centerDragCard();
-    });
+    window.addEventListener('load', () => { loadNew(); centerDragCard(); });
   </script>
 </body>
 </html>
